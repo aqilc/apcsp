@@ -1,22 +1,38 @@
+use macroquad::prelude::*;
+use futures::try_join;
+
 #[derive(Clone, Copy)]
-#[repr(u8)]
 pub enum Direction {
-  N = b'N', W = b'W', E = b'E', S = b'S'
+  N = 0, W = 1, E = 2, S = 3
 }
 
-pub struct Object<'a> {
+pub struct Object {
+  pub img: String,
   pub dir: Direction,
-  pub img: &'a str,
-  pub loaded: bool
+  pub loaded: bool,
+  pub textures: [Texture2D; 4]
 }
 
-impl<'a> Object<'a> {
-  pub fn load(file: &str) {
-    
+impl Object {
+  pub async fn load(name: &str) -> Self {
+    let textures = try_join!(
+      load_texture(name),
+      load_texture(name),
+      load_texture(name),
+      load_texture(name),
+    ).unwrap();
     return Object {
       dir: Direction::N,
-      img: file,
-      loaded: true
+      img: name.to_string(),
+      loaded: true,
+      textures: [textures.0, textures.1, textures.2, textures.3]
     }
   }
+  pub fn draw(&self, x: f32, y: f32) {
+      draw_texture(self.textures[self.dir], x, y, WHITE);
+  }
+  pub fn up(&mut self) { self.dir = Direction::N; }
+  pub fn down(&mut self) { self.dir = Direction::S; }
+  pub fn left(&mut self) { self.dir = Direction::E; }
+  pub fn right(&mut self) { self.dir = Direction::W; }
 }

@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
-use futures::{
-	future::join_all,
-};
+//use futures::{
+//	future::join_all,
+//};
 
 #[derive(Clone, Copy)]
 pub enum Direction {
@@ -25,7 +25,7 @@ impl Object {
     }
   }
   pub async fn draw(&mut self, x: f32, y: f32) {
-		if self.textures[self.dir as usize].is_none() { self.load_side(self.dir).await }
+    if self.textures[self.dir as usize].is_none() { self.load_side(self.dir).await; }
     draw_texture(self.textures[self.dir as usize].unwrap(), x, y, WHITE);
   }
   pub fn up(&mut self) { self.dir = Direction::N; }

@@ -228,7 +228,7 @@ void text(char* text, int x, int y) {
     tw = c->size.w / (float) cs->texsize.w;
     th = c->size.h / (float) cs->texsize.h;
     
-    vb[i * 4] = (shapedata) {{ xp, yp }, { tx, ty }, { col[0], col[1], col[2], col[3] }};
+    vb[i * 4] =     (shapedata) {{ xp, yp }, { tx, ty }, { col[0], col[1], col[2], col[3] }};
     vb[i * 4 + 1] = (shapedata) {{ xp + w, yp }, { tx + tw, ty }, { col[0], col[1], col[2], col[3] }};
     vb[i * 4 + 2] = (shapedata) {{ xp, yp + h }, { tx, ty + th }, { col[0], col[1], col[2], col[3] }};
     vb[i * 4 + 3] = (shapedata) {{ xp + w, yp + h }, { tx + tw, ty + th }, { col[0], col[1], col[2], col[3] }};
@@ -256,24 +256,33 @@ void text(char* text, int x, int y) {
 void draw() {
   setui("u_tex", 0);
   setui("u_shape", true);
+  binda(ctx->vaid);
   if(!ctx->vbid) {
     ctx->vbid = create_vb(sh->data.b, sh->data.cur * sizeof(shapedata));
     ctx->ibid = create_ib(sh->ib.b, sh->ib.cur);
     lapply(ctx->layout);
-  } else if(sh->enlarged) {
+  } else if(sh->enlarged && sh->data.cur) {
     // bindv(ctx->vbid);
     glBufferData(GL_ARRAY_BUFFER, sh->data.cur * sizeof(shapedata), sh->data.b, GL_DYNAMIC_DRAW);
     // bindi(ctx->ibid);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sh->ib.cur * sizeof(u16), sh->ib.b, GL_DYNAMIC_DRAW);
     // sh->enlarged = false;
-  } else if(sh->changed) {
+  } else if(sh->changed && sh->data.cur) {
+    int vao, vbo, ibo, siz, siz2;
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vbo);
+    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &ibo);
+    glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &siz);
+    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &siz2);
+    printf("vao: %d, vbo: %d, ibo: %d, array buffer size: %d, elem array buffer size: %d, arraysize should be: %d\n", vao, vbo, ibo, siz, siz2, sh->data.cur * sizeof(shapedata));
     // bindv(ctx->vbid);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sh->data.cur * sizeof(shapedata), sh->data.b);
     // bindi(ctx->ibid);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sh->ib.cur * sizeof(u16), sh->ib.b);
   }
 
-  glDrawElements(GL_TRIANGLES, sh->ib.cur, GL_UNSIGNED_SHORT, NULL);//sh->ib.b);
+  if(sh->data.cur)
+    glDrawElements(GL_TRIANGLES, sh->ib.cur, GL_UNSIGNED_SHORT, NULL);//sh->ib.b);
 
   // Resets cursors and since the data has been processed, reset the changed and enlarged booleans
   sh->data.cur = 0;
@@ -424,6 +433,7 @@ static void shapeinsert(shapedata* buf, u16* ib, u16 bs, u16 is) {
     // Set changed and enlarged so we can reupload the data later
     sh->changed = true;
     sh->enlarged = true;
+    printf("Enlarged buffer to %d\n", sh->data.size);
   }
   // If it is enough, but the memory isn't the same
   else// if (memcmp(sh->data.b + sh->data.cur, buf, bs))
@@ -512,15 +522,17 @@ void image(imagedata* image, int ix, int iy, int iw, int ih) {
   // bindv(ctx->vbid);
   float x = ix; float y = iy; float w = iw; float h = ih;
   shapedata tl[6] = {
-    {{  x, y  }, {0.f, 0.f}, {col[0], col[1], col[2], col[3]}},
-    {{  x, y+h}, {0.f, 1.f}, {col[0], col[1], col[2], col[3]}},
-    {{x+w, y  }, {1.f, 0.f}, {col[0], col[1], col[2], col[3]}},
-    {{x+w, y  }, {1.f, 0.f}, {col[0], col[1], col[2], col[3]}},
-    {{  x, y+h}, {0.f, 1.f}, {col[0], col[1], col[2], col[3]}},
-    {{x+w, y+h}, {1.f, 1.f}, {col[0], col[1], col[2], col[3]}},
+      {{x, y}, {0.f, 0.f}, {col[0], col[1], col[2], col[3]}},
+      {{x, y + h}, {0.f, 1.f}, {col[0], col[1], col[2], col[3]}},
+      {{x + w, y}, {1.f, 0.f}, {col[0], col[1], col[2], col[3]}},
+      {{x + w, y}, {1.f, 0.f}, {col[0], col[1], col[2], col[3]}},
+      {{x, y + h}, {0.f, 1.f}, {col[0], col[1], col[2], col[3]}},
+      {{x + w, y + h}, {1.f, 1.f}, {col[0], col[1], col[2], col[3]}},
   };
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(tl), tl);
-  
+  if (!sh->data.cur)
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tl), tl, GL_DYNAMIC_DRAW);
+  else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(tl), tl);
+
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -541,7 +553,9 @@ void imagesub(imagedata* image, int ix, int iy, int iw, int ih, int itx, int ity
     {{  x, y+h}, {   tx, ty+th}, {col[0], col[1], col[2], col[3]}},
     {{x+w, y+h}, {tx+tw, ty+th}, {col[0], col[1], col[2], col[3]}},
   };
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(tl), tl);
+  if(!sh->data.cur)
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tl), tl, GL_DYNAMIC_DRAW);
+  else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(tl), tl);
   
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }

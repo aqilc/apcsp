@@ -100,11 +100,13 @@ int main(void) {
     frameaccum += 1.0/g.delta;
 
     // If there have been more than 100 accumulated frames, reset the accumulation and update framecount
-    if(g.frames % 100 == 0) {
-      snprintf(framerate, sizeof(framerate), "%.2f fps", frameaccum/100);
+    #define FRAMERATE_ACCUMULATION 2
+    if(g.frames % FRAMERATE_ACCUMULATION == 0) {
+      snprintf(framerate, sizeof(framerate), "%.2f fps", frameaccum/FRAMERATE_ACCUMULATION);
       frameaccum = 0;
     }
 
+    fill(0, 0, 0, 0);
     sprite(player, 0, 0, 50, 50, 32, 32);
     sprite(terrain, 0, 0, 100, 50, 32, 32);
 

@@ -50,8 +50,8 @@ typedef enum {
 
 typedef struct spritesheet {
   imagedata* img;
-  float step_y;
-  float step_x;
+  int step_y;
+  int step_x;
 } spritesheet;
 
 // Init for opengl
@@ -75,7 +75,7 @@ imagedata* loadimage(char* path);
 void image(imagedata* image, int x, int y, int w, int h);
 void imagesub(imagedata* image, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith);
 
-spritesheet* loadss(char* path, int step_x, int step_y);
+spritesheet* createss(imagedata* img, int step_x, int step_y);
 void sprite(spritesheet* s, int sx, int sy, int x, int y, int w, int h);
 
 #endif

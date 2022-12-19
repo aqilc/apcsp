@@ -21,6 +21,13 @@ add_executable(cdungeon
 
 # add_custom_command(
 #         TARGET cdungeon POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy
+#                 ${CMAKE_SOURCE_DIR}/Roboto-Medium.ttf
+#                 ${CMAKE_CURRENT_BINARY_DIR}/Debug/Roboto-Medium.ttf)
+
+# add_custom_command(
+#         TARGET cdungeon POST_BUILD
 #         COMMAND ${CMAKE_COMMAND} -E copy_directory
 #                 ${CMAKE_SOURCE_DIR}/opengameart/
-#                 ${CMAKE_CURRENT_BINARY_DIR}/opengameart/)
+#                 ${CMAKE_CURRENT_BINARY_DIR}/Debug/opengameart/)
+

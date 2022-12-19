@@ -71,11 +71,7 @@ int main(void) {
   // Initializes text shaders and context
   glinitgraphics();
   double start = glfwGetTime();
-#ifdef _DEBUG
-  typeface* font = loadfont("D:\\projects\\rust\\apcsp\\cdungeon\\Roboto-Medium.ttf");
-#else
   typeface* font = loadfont("./Roboto-Medium.ttf");
-#endif
   printf("%.3fs to load fonts\n", glfwGetTime() - start);
   doneloadingfonts();
 
@@ -87,13 +83,11 @@ int main(void) {
   glfwSetCursorPosCallback(window, cursor_position_callback);
   glfwSetKeyCallback(window, key_callback);
 
-#ifdef _DEBUG
-  spritesheet* player = loadss("d:/rust/apcsp/cdungeon/opengameart/DawnLike/Characters/Player0.png", 16, 16);
-  spritesheet* terrain = loadss("d:/rust/apcsp/cdungeon/opengameart/DawnLike/Objects/Floor.png", 16, 16);
-#else
-  spritesheet* player = loadss("./opengameart/DawnLike/Characters/Player0.png", 16, 16);
-  spritesheet* terrain = loadss("./opengameart/DawnLike/Objects/Floor.png", 16, 16);
-#endif
+  imagedata *img = loadimage("./opengameart/DawnLike/Characters/Player0.png");
+  imagedata *img2 = loadimage("./opengameart/DawnLike/Objects/Floor.png");
+
+  spritesheet* player = createss(img, 16, 16);
+  spritesheet* terrain = createss(img2, 16, 16);
 
   
   while(!glfwWindowShouldClose(window)) {

@@ -27,8 +27,8 @@
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
 // #include "stb/stb_image_write.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+// #define STB_IMAGE_IMPLEMENTATION
+// #include <stb/stb_image.h>
 
 
 #define STRINGIFY(x) STRINGIFY2(x)
@@ -453,12 +453,12 @@ static void shapeinsert(shapedata* buf, u16* ib, u16 bs, u16 is) {
 
 // ---------------- Image things ---------------- //
 
-
 imagedata* loadimage(char* path) {
-  if(!exists) { printf("filename didn't exist: %s", path); return NULL; }
-  int x, y, n;
-  u8* data = stbi_load(path, &x, &y, &n, 4);
-  printf("succesfully loaded in texture %s (%dx%d) with %d channels\n", path, x, y, n);
+  if(!exists(path)) { printf("filename didn't exist: %s", path); return NULL; }
+  u32 x, y;
+  u8* data = read_image(path, &x, &y);
+  if(!data) puts("Failed to load image");
+  printf("Loaded image '%s' (%d, %d)\n", path, x, y);
 
   GLenum slot = findslot();
   printf("Used slot %d\n", slot);
@@ -472,7 +472,7 @@ imagedata* loadimage(char* path) {
     .uses = 0, .typeface = false, .name = new_s(path)
   };
   
-  stbi_image_free(data);
+  free(data);
   return imageinsert(&img);
 }
 
@@ -508,8 +508,8 @@ static void bindimage(imagedata* img) {
 void image(imagedata* image, int ix, int iy, int iw, int ih) {
   if(!ctx->vbid) return;
   bindimage(image);
-  binda(ctx->vaid);
-  bindv(ctx->vbid);
+  // binda(ctx->vaid);
+  // bindv(ctx->vbid);
   float x = ix; float y = iy; float w = iw; float h = ih;
   shapedata tl[6] = {
     {{  x, y  }, {0.f, 0.f}, {col[0], col[1], col[2], col[3]}},
@@ -528,8 +528,8 @@ void image(imagedata* image, int ix, int iy, int iw, int ih) {
 void imagesub(imagedata* image, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith) {
   if(!ctx->vbid) return;
   bindimage(image);
-  binda(ctx->vaid);
-  bindv(ctx->vbid);
+  // binda(ctx->vaid);
+  // bindv(ctx->vbid);
   float x = ix; float y = iy; float w = iw; float h = ih;
   float otw = image->size.w; float oth = image->size.h;
   float tx = (float)itw / otw; float ty = (float) ith / oth; float tw = (float)itw / otw; float th = (float)ith / oth;
@@ -547,12 +547,11 @@ void imagesub(imagedata* image, int ix, int iy, int iw, int ih, int itx, int ity
 }
 
 
-spritesheet* loadss(char* path, int step_x, int step_y) {
-  imagedata* img = loadimage(path);
+spritesheet* createss(imagedata* img, int step_x, int step_y) {
   spritesheet* s = malloc(sizeof(spritesheet));
   s->img = img;
-  s->step_y = (float) step_y / img->size.h;
-  s->step_x = (float) step_x / img->size.w;
+  s->step_y = step_y;
+  s->step_x = step_x;
   return s;
 }
 

@@ -30,5 +30,6 @@ typedef struct gamestate {
 extern gamestate g;
 
 char* read(char* file);
+void* read_image(char *file, uint32_t *width, uint32_t *height);
 #endif
 

@@ -115,7 +115,7 @@ void glinitgraphics() {
     puts("Couldn't init freetype :(\nLine: "_LINE" | File: "__FILE__"\n");
 
   // Initialized VA and shaders
-  initcontext(&ctx, "d:/projects/c/ctetris/res/shaders/graphics.glsl");
+  initcontext(&ctx, "./opengameart/graphics.glsl");
 
   // Sets up layout
   ctx->layout = calloc(sizeof(vlayout), 1);

@@ -60,8 +60,8 @@ typedef struct shapeheap {
 
 static void shapeinsert(shapedata* buf, u16* ib, u16 bs, u16 is);
 static void shape(shapedata* data, u16* ib, u16 bs, u16 is, vec4 col);
-static void bindimage(imagedata* img);
-static imagedata* imageinsert(imagedata* image);
+static void bindimage(img img);
+static size_t imageinsert(imagedata* image);
 static void useslot(u32 slot);
 static GLuint freeslot();
 static GLuint findslot();
@@ -77,7 +77,7 @@ static struct bufib quad(shapedata* buf, u16* ib, int x1, int y1, int x2, int y2
 static u16 textsize = 48;
 
 // Keeps track of drawn images so we don't have extreme perf penalties when drawing images
-static u32 imageslen = 0;
+static size_t imageslen = 0;
 static imagedata* images = NULL;
 
 // Data for drawing shapes
@@ -261,25 +261,26 @@ void draw() {
     ctx->vbid = create_vb(sh->data.b, sh->data.cur * sizeof(shapedata));
     ctx->ibid = create_ib(sh->ib.b, sh->ib.cur);
     lapply(ctx->layout);
-  } else if(sh->enlarged && sh->data.cur) {
+  } else {
     // bindv(ctx->vbid);
     glBufferData(GL_ARRAY_BUFFER, sh->data.cur * sizeof(shapedata), sh->data.b, GL_DYNAMIC_DRAW);
     // bindi(ctx->ibid);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sh->ib.cur * sizeof(u16), sh->ib.b, GL_DYNAMIC_DRAW);
     // sh->enlarged = false;
-  } else if(sh->changed && sh->data.cur) {
-    int vao, vbo, ibo, siz, siz2;
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vbo);
-    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &ibo);
-    glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &siz);
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &siz2);
-    printf("vao: %d, vbo: %d, ibo: %d, array buffer size: %d, elem array buffer size: %d, arraysize should be: %d\n", vao, vbo, ibo, siz, siz2, sh->data.cur * sizeof(shapedata));
-    // bindv(ctx->vbid);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sh->data.cur * sizeof(shapedata), sh->data.b);
-    // bindi(ctx->ibid);
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sh->ib.cur * sizeof(u16), sh->ib.b);
   }
+  // } else if(sh->changed && sh->data.cur) {
+  //   int vao, vbo, ibo, siz, siz2;
+  //   glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
+  //   glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vbo);
+  //   glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &ibo);
+  //   glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &siz);
+  //   glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &siz2);
+  //   printf("vao: %d, vbo: %d, ibo: %d, array buffer size: %d, elem array buffer size: %d, arraysize should be: %d\n", vao, vbo, ibo, siz, siz2, sh->data.cur * sizeof(shapedata));
+  //   // bindv(ctx->vbid);
+  //   glBufferSubData(GL_ARRAY_BUFFER, 0, sh->data.cur * sizeof(shapedata), sh->data.b);
+  //   // bindi(ctx->ibid);
+  //   glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sh->ib.cur * sizeof(u16), sh->ib.b);
+  // }
 
   if(sh->data.cur)
     glDrawElements(GL_TRIANGLES, sh->ib.cur, GL_UNSIGNED_SHORT, NULL);//sh->ib.b);
@@ -433,7 +434,7 @@ static void shapeinsert(shapedata* buf, u16* ib, u16 bs, u16 is) {
     // Set changed and enlarged so we can reupload the data later
     sh->changed = true;
     sh->enlarged = true;
-    printf("Enlarged buffer to %d\n", sh->data.size);
+    // printf("Enlarged buffer to %d\n", sh->data.size);
   }
   // If it is enough, but the memory isn't the same
   else// if (memcmp(sh->data.b + sh->data.cur, buf, bs))
@@ -463,15 +464,15 @@ static void shapeinsert(shapedata* buf, u16* ib, u16 bs, u16 is) {
 
 // ---------------- Image things ---------------- //
 
-imagedata* loadimage(char* path) {
-  if(!exists(path)) { printf("filename didn't exist: %s", path); return NULL; }
+img loadimage(char* path) {
+  if(!exists(path)) { printf("filename didn't exist: %s", path); return 0; }
   u32 x, y;
   u8* data = read_image(path, &x, &y);
   if(!data) puts("Failed to load image");
   printf("Loaded image '%s' (%d, %d)\n", path, x, y);
 
   GLenum slot = findslot();
-  printf("Used slot %d\n", slot);
+  // printf("Used slot %d\n", slot);
   activet(slot);
   GLuint t = texture(data, x, y, GL_RGBA, false);
 
@@ -484,6 +485,34 @@ imagedata* loadimage(char* path) {
   
   free(data);
   return imageinsert(&img);
+}
+
+img loadpixelart(char* path) {
+  if(!exists(path)) { printf("filename didn't exist: %s", path); return 0; }
+  u32 x, y;
+  u8* data = read_image(path, &x, &y);
+  if(!data) puts("Failed to load image");
+  printf("Loaded image '%s' (%d, %d)\n", path, x, y);
+
+  GLenum slot = findslot();
+  // printf("Used slot %d\n", slot);
+  activet(slot);
+  GLuint t = pixpertex(data, x, y, GL_RGBA);
+
+  u32 hi = hash(path, strlen(path));
+  imagedata img = {
+    .id = hi, .type = GL_RGBA, .slot = slot,
+    .size = (union vec) { .w = x, .h = y },
+    .uses = 0, .typeface = false, .name = new_s(path)
+  };
+  
+  free(data);
+  return imageinsert(&img);
+}
+
+inline imagedata* imgd(img index) {
+  if(index >= imageslen) return NULL;
+  return images + index;
 }
 
 
@@ -509,13 +538,15 @@ static GLuint findslot() {
   return 31;
 }
 
-static void bindimage(imagedata* img) {
-  if(img->slot > 31) { printf("Invalid slot %d\n", img->slot); return; }
+static printed = false;
+static void bindimage(img index) {
+  imagedata* img = imgd(index);
+  if(img->slot > 31) { if(!printed) { printed = true; printf("Invalid slot %d for image with path: %s\n", img->slot, img->name); } return; }
   setui("u_tex", img->slot);
-  setui("u_shape", img->typeface);
+  setui("u_shape", false);
 }
 
-void image(imagedata* image, int ix, int iy, int iw, int ih) {
+void image(img image, int ix, int iy, int iw, int ih) {
   if(!ctx->vbid) return;
   bindimage(image);
   // binda(ctx->vaid);
@@ -537,9 +568,10 @@ void image(imagedata* image, int ix, int iy, int iw, int ih) {
 }
 
 
-void imagesub(imagedata* image, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith) {
+void imagesub(img ind, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith) {
   if(!ctx->vbid) return;
-  bindimage(image);
+  bindimage(ind);
+  imagedata* image = imgd(ind);
   // binda(ctx->vaid);
   // bindv(ctx->vbid);
   float x = ix; float y = iy; float w = iw; float h = ih;
@@ -561,7 +593,7 @@ void imagesub(imagedata* image, int ix, int iy, int iw, int ih, int itx, int ity
 }
 
 
-spritesheet* createss(imagedata* img, int step_x, int step_y) {
+spritesheet* createss(img img, int step_x, int step_y) {
   spritesheet* s = malloc(sizeof(spritesheet));
   s->img = img;
   s->step_y = step_y;
@@ -574,12 +606,12 @@ void sprite(spritesheet* s, int sx, int sy, int x, int y, int w, int h) {
 }
 
 
-static imagedata* imageinsert(imagedata* image) {
+static img imageinsert(imagedata* image) {
   if(!images) images = malloc(sizeof(imagedata));
   else images = realloc(images, (imageslen + 1) * sizeof(imagedata));
   images[imageslen] = *image;
   imageslen ++;
-  return images + imageslen - 1;
+  return imageslen - 1;
 }
 
 

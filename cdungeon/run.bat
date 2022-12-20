@@ -13,8 +13,8 @@ rem goto compile
 
 rem :compile
 mkdir bin
-set c=clcache /c /MD /EHsc /O2 /std:c17 /I"./deps/include/" /Fo"./bin/"
-for /f "tokens=*" %%F in ('dir /b /a:-d "*.c"') do call set c=%%c%% "%%F"
+set c=clcache /c /MD /EHsc /O2 /std:c17 /I"./deps/include/" /Fo"./bin/" main.c
+rem for /f "tokens=*" %%F in ('dir /b /a:-d "*.c"') do call set c=%%c%% "%%F"
 for /f "tokens=*" %%F in ('dir /b /a:-d ".\deps\*.c"') do call set c=%%c%% ".\deps\%%F"
 rem for /f "tokens=*" %%F in ('dir /b /a:-d ".\g\*.c"') do call set c=%%c%% ".\g\%%F"
 echo running %c%

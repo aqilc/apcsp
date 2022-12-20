@@ -141,6 +141,25 @@ GLuint texture(unsigned char* buf, int width, int height, GLenum format, bool ty
   return t;
 }
 
+GLuint pixpertex(unsigned char* buf, int width, int height, GLenum format) {
+  GLuint t;
+  
+  // Generates and binds the texture
+  glGenTextures(1, &t);
+  glBindTexture(GL_TEXTURE_2D, t);
+  
+  // Sets default params
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  // Sends texture data to the gpu
+  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, buf);
+  
+  return t;
+}
+
 // Magic things, idk wtf this code does
 unsigned int compileshader(unsigned int type, char* src) {
   unsigned int id = glCreateShader(type);

@@ -33,10 +33,9 @@ char* read(char* file) {
 
 size_t read_size(char* file, void** buf) {
   FILE *fp = fopen(file, "rb");
-  if (!fp)
-  {
+  if (!fp) {
     printf("Couldn't open file %s", file);
-    return "";
+    return 0;
   }
 
   // Finds length of file

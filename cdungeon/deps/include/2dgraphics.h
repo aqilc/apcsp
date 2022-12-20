@@ -49,10 +49,12 @@ typedef enum {
 } drawprimitives;
 
 typedef struct spritesheet {
-  imagedata* img;
+  size_t img;
   int step_y;
   int step_x;
 } spritesheet;
+
+typedef size_t img;
 
 // Init for opengl
 void glinitgraphics();
@@ -71,12 +73,14 @@ void fill(float c1, float c2, float c3, float c4);
 void skiprec(u16 n);
 void shapecolor(vec4 col, u16 verts);
 
-imagedata* loadimage(char* path);
-void image(imagedata* image, int x, int y, int w, int h);
-void imagesub(imagedata* image, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith);
+img loadimage(char* path);
+img loadpixelart(char* path);
+inline imagedata *imgd(img index);
+void image(img image, int x, int y, int w, int h);
+void imagesub(img image, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith);
 
-spritesheet* createss(imagedata* img, int step_x, int step_y);
-void sprite(spritesheet* s, int sx, int sy, int x, int y, int w, int h);
+spritesheet* createss(img img, int step_x, int step_y);
+void sprite(spritesheet * s, int sx, int sy, int x, int y, int w, int h);
 
 #endif
 

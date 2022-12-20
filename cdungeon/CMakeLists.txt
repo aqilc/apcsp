@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 project(cdungeon C)
 
 set(CMAKE_C_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 include_directories(. ./deps/include)
 link_directories(./deps/lib)
@@ -16,18 +17,22 @@ add_executable(cdungeon
         deps/spng.c
         deps/util.c
         deps/futil.c
-        game.c
         main.c)
 
-# add_custom_command(
-#         TARGET cdungeon POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -E copy
-#                 ${CMAKE_SOURCE_DIR}/Roboto-Medium.ttf
-#                 ${CMAKE_CURRENT_BINARY_DIR}/Debug/Roboto-Medium.ttf)
+add_custom_command(
+        TARGET cdungeon POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/Roboto-Medium.ttf
+                ${CMAKE_CURRENT_BINARY_DIR}/Debug/Roboto-Medium.ttf)
 
-# add_custom_command(
-#         TARGET cdungeon POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -E copy_directory
-#                 ${CMAKE_SOURCE_DIR}/opengameart/
-#                 ${CMAKE_CURRENT_BINARY_DIR}/Debug/opengameart/)
+add_custom_command(
+        TARGET cdungeon POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_SOURCE_DIR}/opengameart/
+                ${CMAKE_CURRENT_BINARY_DIR}/Debug/opengameart/)
 
+add_custom_command(
+        TARGET cdungeon POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_SOURCE_DIR}/maps/
+                ${CMAKE_CURRENT_BINARY_DIR}/Debug/maps/)

@@ -30,6 +30,6 @@ vec4 text;
 
 void main() {
     text = texture(u_tex, v_text);
-    color = u_shape ? vec4(text.r * v_col.rgb, v_col.a) : vec4(mix(text.rgb, v_col.rgb, v_col.a), text.a);
+    color = u_shape ? vec4(text.r * v_col.rgba) : vec4(mix(text.rgb, v_col.rgb, v_col.a), text.a);
     // color = vec4(textColor, 1.0) * sampled;
 }

@@ -14,15 +14,19 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-gamestate g = { .width = 640, .height = 480 };
+gamestate g = { .width = 800, .height = 600 };
+
 
 bool pressed = false;
 pvec pressplace;
 struct { double x, y; bool pressed; } mouse;
 
-
 double frameaccum = 0;
 char framerate[12];
+
+GLFWwindow* window;
+
+#include "game.c"
 
 // struct player {
   
@@ -52,7 +56,7 @@ int main(void) {
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
   
   /* Create a windowed mode window and its OpenGL context */
-  GLFWwindow* window = glfwCreateWindow(g.width, g.height, "Hello World", NULL, NULL);
+  window = glfwCreateWindow(g.width, g.height, "Hello World", NULL, NULL);
   if (!window) {
     puts("couldn't initialize window???");
     glfwTerminate(); return -1; }
@@ -61,33 +65,14 @@ int main(void) {
   glfwMakeContextCurrent(window);
   
   // Set the framerate to the framerate of the screen, basically 60fps.
-  // glfwSwapInterval(1);
+  glfwSwapInterval(1);
   
   // Initialize GLEW so we can reference OpenGL functions.
   if(glewInit()/* != GLEW_OK */) {
     printf("error with initializing glew");
     glfwTerminate(); return -1; }
 
-  // Initializes text shaders and context
-  glinitgraphics();
-  double start = glfwGetTime();
-  typeface* font = loadfont("./Roboto-Medium.ttf");
-  printf("%.3fs to load fonts\n", glfwGetTime() - start);
-  doneloadingfonts();
-
-  // Sets the coordinate system to screen 1:1 pixel mapping
-  coords_screen();
-
-  // GLFW input callbacks
-  glfwSetMouseButtonCallback(window, mouse_button_callback);
-  glfwSetCursorPosCallback(window, cursor_position_callback);
-  glfwSetKeyCallback(window, key_callback);
-
-  imagedata *img = loadimage("./opengameart/DawnLike/Characters/Player0.png");
-  imagedata *img2 = loadimage("./opengameart/DawnLike/Objects/Floor.png");
-
-  spritesheet* player = createss(img, 16, 16);
-  spritesheet* terrain = createss(img2, 16, 16);
+  init();
 
   
   while(!glfwWindowShouldClose(window)) {
@@ -100,19 +85,13 @@ int main(void) {
     frameaccum += 1.0/g.delta;
 
     // If there have been more than 100 accumulated frames, reset the accumulation and update framecount
-    #define FRAMERATE_ACCUMULATION 2
+    #define FRAMERATE_ACCUMULATION 10
     if(g.frames % FRAMERATE_ACCUMULATION == 0) {
       snprintf(framerate, sizeof(framerate), "%.2f fps", frameaccum/FRAMERATE_ACCUMULATION);
       frameaccum = 0;
     }
 
-    fill(0, 0, 0, 0);
-    sprite(player, 0, 0, 50, 50, 32, 32);
-    sprite(terrain, 0, 0, 100, 50, 32, 32);
-
-    fill(.5f, .5f, .5f, 1.0f);
-    tsiz(20);
-    text(framerate, g.width - 130, g.height - 10);
+    drawgame();
     
     draw();
     //glfwSetWindowShouldClose(window, 1);
@@ -121,30 +100,5 @@ int main(void) {
   }
 
   return 0;
-}
-
-
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-  // if (action == GLFW_PRESS)
-  //   if(button == GLFW_MOUSE_BUTTON_RIGHT)
-  //     glfwSetWindowShouldClose(window, 1);
-  //   else { pressed = true; glfwGetCursorPos(window, &pressplace.x, &pressplace.y); }
-  // else pressed = false;
-}
-
-void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
-  mouse.x = xpos;
-  mouse.y = ypos;
-  if(pressed) {
-    int wxpos, wypos;
-    glfwGetWindowPos(window, &wxpos, &wypos);
-    glfwSetWindowPos(window, (int) (xpos - pressplace.x) + wxpos, (int) (ypos - pressplace.y) + wypos);
-  }
-}
-
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-  
 }
 

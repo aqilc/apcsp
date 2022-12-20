@@ -72,7 +72,15 @@ int main(void) {
     printf("error with initializing glew");
     glfwTerminate(); return -1; }
 
+  // GLFW input callbacks
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
+  glfwSetCursorPosCallback(window, cursor_position_callback);
+  glfwSetKeyCallback(window, key_callback);
+
   init();
+
+  // Sets the coordinate system to screen 1:1 pixel mapping
+  coords_screen();
 
   
   while(!glfwWindowShouldClose(window)) {

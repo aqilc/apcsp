@@ -576,7 +576,7 @@ void imagesub(img ind, int ix, int iy, int iw, int ih, int itx, int ity, int itw
   // bindv(ctx->vbid);
   float x = ix; float y = iy; float w = iw; float h = ih;
   float otw = image->size.w; float oth = image->size.h;
-  float tx = (float)itw / otw; float ty = (float) ith / oth; float tw = (float)itw / otw; float th = (float)ith / oth;
+  float tx = (float)itx / otw; float ty = (float) ity / oth; float tw = (float)itw / otw; float th = (float)ith / oth;
   shapedata tl[6] = {
     {{  x, y  }, {   tx, ty   }, {col[0], col[1], col[2], col[3]}},
     {{  x, y+h}, {   tx, ty+th}, {col[0], col[1], col[2], col[3]}},

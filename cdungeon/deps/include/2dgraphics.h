@@ -4,7 +4,6 @@
 
 // #include "util.h"
 #include "glapi.h"
-#include "vec.h"
 #include "linmath.h"
 
 #include <ft2build.h>
@@ -28,6 +27,7 @@ typedef struct typeface {
   union vec texsize;
   u32 gl;
   GLuint slot;
+  u32 space_width;
 } typeface;
 typeface* loadfont(char* file);
 void doneloadingfonts();
@@ -54,7 +54,7 @@ typedef struct spritesheet {
   int step_x;
 } spritesheet;
 
-typedef size_t img;
+typedef u32 img;
 
 // Init for opengl
 void glinitgraphics();
@@ -73,6 +73,7 @@ void fill(float c1, float c2, float c3, float c4);
 void skiprec(u16 n);
 void shapecolor(vec4 col, u16 verts);
 
+// Image things took even longer than text :((((((
 img loadimage(char* path);
 img loadpixelart(char* path);
 inline imagedata *imgd(img index);

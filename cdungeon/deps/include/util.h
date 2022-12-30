@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <stdbool.h>
+#include "vec.h"
 
 union vec {
   struct { int x; int y; };

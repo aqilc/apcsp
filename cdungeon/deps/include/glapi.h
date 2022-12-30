@@ -26,9 +26,9 @@ typedef struct drawcontext {
   vlayout* layout;
 } drawcontext;
 
-GLuint* create_va(char n);
+GLuint* create_va(u8 n);
 GLuint create_vb(void* data, unsigned int size);
-GLuint create_ib(short* data, unsigned int size);
+GLuint create_ib(u16* data, unsigned int size);
 
 
 void binda(GLuint id);

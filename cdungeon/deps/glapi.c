@@ -9,7 +9,7 @@ GLuint cur_ib = 0;
 GLuint cur_prog = 0;
 drawcontext* cur_ctx = NULL;
 
-GLuint* create_va(char n) {
+GLuint* create_va(u8 n) {
   GLuint* a = (GLuint*) malloc(n * sizeof(GLuint));
   glGenVertexArrays(n, a);
   binda(*a);
@@ -24,7 +24,7 @@ GLuint create_vb(void* data, unsigned int size) {
   return b;
 }
 
-GLuint create_ib(short* data, unsigned int size) {
+GLuint create_ib(u16* data, unsigned int size) {
   GLuint b;
   glGenBuffers(1, &b);
   bindi(b);
@@ -123,7 +123,7 @@ GLuint texture(unsigned char* buf, int width, int height, GLenum format, bool ty
   glBindTexture(GL_TEXTURE_2D, t);
   
   // Sets default params
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

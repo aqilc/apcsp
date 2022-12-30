@@ -1,4 +1,5 @@
-
+#ifndef HASHTABLE_FILES
+#define HASHTABLE_FILES
 #include "hashfunc.h"
 
 typedef struct hashitem {
@@ -30,3 +31,4 @@ char* new_s(char* s);
 int htgi(hashtable* h, char* key);
 unsigned int htgui(hashtable* h, char* key);
 float htgf(hashtable* h, char* key);
+#endif

@@ -12,14 +12,11 @@
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 gamestate g = { .width = 800, .height = 600 };
 
-
-bool pressed = false;
-pvec pressplace;
-struct { double x, y; bool pressed; } mouse;
 
 double frameaccum = 0;
 char framerate[12];
@@ -27,21 +24,6 @@ char framerate[12];
 GLFWwindow* window;
 
 #include "game.c"
-
-// struct player {
-  
-// };
-// struct player p = {0};
-
-struct button {
-  bool finishedpressing;
-  bool pressing;
-  union vec size;
-  union vec coords;
-  char* text;
-  int textsize;
-};
-struct button* buttons = NULL;
 
 int main(void) {
 

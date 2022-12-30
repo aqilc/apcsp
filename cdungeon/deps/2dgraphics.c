@@ -1,5 +1,7 @@
 
 /*
+  Copyright ©AqilCont (aqilcm@gmail.com)
+
   TODO:
   - [ ] Keep track of the order of things with z axis
   - [ ] Need to completely stop uploading the whole draw buffer every frame
@@ -61,7 +63,7 @@ typedef struct shapeheap {
 static void shapeinsert(shapedata* buf, u16* ib, u16 bs, u16 is);
 static void shape(shapedata* data, u16* ib, u16 bs, u16 is, vec4 col);
 static void bindimage(img img);
-static size_t imageinsert(imagedata* image);
+static img imageinsert(imagedata* image);
 static void useslot(u32 slot);
 static GLuint freeslot();
 static GLuint findslot();
@@ -86,14 +88,15 @@ static drawcontext* ctx = NULL;
 static char textures = 0;
 static u32 tex = 0;
 
-// Current font and font store
-static hashtable* cses = NULL;
-static char* font = NULL;
-
 // Context color
 static vec4 col = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-static FT_Library ft;
+// Current font and font store
+static hashtable* cses = NULL;
+static char* font = NULL;
+static float line_height = 1.2;
+
+static FT_Library ft = {0};
 static FT_Face* faces = NULL; // Array of faces so user doesn't have to take care of deallocating them later.. at least that's the idea i think
 static u32 faceslen = 0;
 
@@ -109,13 +112,9 @@ void glinitgraphics() {
   // Enables blending
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  
-  // Loads the freetype library.
-  if(FT_Init_FreeType(&ft))
-    puts("Couldn't init freetype :(\nLine: "_LINE" | File: "__FILE__"\n");
 
   // Initialized VA and shaders
-  initcontext(&ctx, "./opengameart/graphics.glsl");
+  initcontext(&ctx, "./graphics.glsl");
 
   // Sets up layout
   ctx->layout = calloc(sizeof(vlayout), 1);
@@ -141,6 +140,12 @@ typeface* loadfont(char* file) {
   else faces = realloc(faces, sizeof(FT_Face) * (faceslen + 1));
   FT_Face* face = faces + faceslen;
   faceslen++;
+
+  // Loads the freetype library.
+  if(!ft) if(FT_Init_FreeType(&ft))
+    puts("Couldn't init freetype :(\nLine: "_LINE" | File: "__FILE__"\n");
+
+  // Loads the new face in using the library
   if(FT_New_Face(ft, file, 0, face)) {
     printf("Couldn't load font '%s' :(\nLine: "_LINE" | File: "__FILE__"\n", file); return NULL; }
   FT_Set_Pixel_Sizes(*face, 0, 48);
@@ -148,6 +153,7 @@ typeface* loadfont(char* file) {
 }
 
 void doneloadingfonts() {
+  if(!ft) return;
   for(u32 i = 0; i < faceslen; i ++)
     FT_Done_Face(faces[i]);
   free(faces);
@@ -207,16 +213,28 @@ void text(char* text, int x, int y) {
   u16 cur = sh->data.cur;
   GLuint slot = cs->slot;
   float xp, yp, w, h, tx, ty, th, tw;
-  vec4 col = { 1.0, 1.0, 1.0, 1.0 };
+  int initial_x = x;
   u32 i = 0;
   for(; i < len; text++, i++) {
+
+    // Newlines in five lines :D
+    if (*text == '\n') {
+      y += (int) (line_height * textsize);
+      x = initial_x;
+      continue;
+    }
+
+    else if(*text == ' ') {
+      x += cs->space_width * scale;
+      continue;
+    }
 
     // Gets the Char object from the hashmap for the character lib
     char* tmp = new_c(*text);
     Char* c = htg(cs->chars, tmp);
     free(tmp);
     
-    if(!c) printf("bruh wtf u drawin \"%c\"", *text);
+    if(!c) { printf("bruh wtf u drawin \"%c\"", *text); continue; }
     
     xp = (float) x + c->bearing.x * scale;
     yp = (float) y - c->bearing.y * scale;
@@ -309,11 +327,15 @@ typeface* loadchars(FT_Face face, char* chars) {
   for(int i = 0; i < len; i ++) {
     FT_Error error = FT_Load_Char(face, chars[i], FT_LOAD_RENDER);
     if(error) printf("Failed to load glyph '%c' (error code: %d | Line: "_LINE" | File: "__FILE__")\n", chars[i], error);
+
+    // Skip spaces, since you don't really need to draw anything
+    if(chars[i] == ' ') {
+      pog->space_width = face->glyph->advance.x >> 6; continue; }
     
     int width = face->glyph->bitmap.width;
     int height = face->glyph->bitmap.rows;
     union vec size = { width, height };
-      
+    
     CharNode* rec = charnode_insert(&root, &size);
     if(!rec) { printf("Could not fit char %c into the texture map\n", chars[i]); break; }
     
@@ -538,7 +560,7 @@ static GLuint findslot() {
   return 31;
 }
 
-static printed = false;
+static bool printed = false;
 static void bindimage(img index) {
   imagedata* img = imgd(index);
   if(img->slot > 31) { if(!printed) { printed = true; printf("Invalid slot %d for image with path: %s\n", img->slot, img->name); } return; }

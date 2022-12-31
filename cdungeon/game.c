@@ -20,7 +20,7 @@ struct {
   int x, y, w, h; int vx, vy;
   int dir, state;
   spritesheet* sprite;
-} player = {.x = 600, .y = 760, .w = 58, .h = 62};
+} player = {.x = 600, .y = 870, .w = 58, .h = 62};
 union vec camera = {0, 0};
 // camera width and height are the window width and height defined in g.width and g.height
 
@@ -261,9 +261,13 @@ void prompt(char* txt) {
   // Truncates the text so it looks like it's being typed out
   if(g.frames - pst.startframe <= PROMPTUPLEN) return;
   int framesintoanim = min(5, g.frames - pst.startframe - PROMPTUPLEN);
+  puts("1");
   float animstage = (float) framesintoanim / ((float) ANIMLEN - (float) PROMPTUPLEN);
+  puts("2");
   u32 texlen = strlen(txt) * animstage;
+  printf("out of bounds? strlen: %d, truncated to: %d\n", strlen(txt), texlen);
   txt[texlen] = '\0';
+  puts("nah");
   text(txt, 48 + blocksize, g.height - 20 - blocksize);
 }
 

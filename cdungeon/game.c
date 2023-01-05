@@ -162,7 +162,7 @@ void draw_player() {
 			int y = player.y / blocksize + j;
 			fill(0, 0, 0, .2);
 			if(getblock(x, y) == 1) {
-				rect(x * blocksize + camera.x, y * blocksize - camera.y, blocksize, blocksize);
+				rect(x * blocksize + camera.x, y * blocksize + camera.y, blocksize, blocksize);
 			}
 			rect(blocksize * x + camera.x + blocksize, blocksize * y + camera.y + blocksize, -20, 2);
 			rect(blocksize * x + camera.x + blocksize, blocksize * y + camera.y + blocksize, 2, -20);

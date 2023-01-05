@@ -57,7 +57,7 @@ typedef struct spritesheet {
 typedef u32 img;
 
 // Init for opengl
-void glinitgraphics();
+void loadglgraphics();
 
 // Text things(took so longgggggggg)
 void tfont(char* name);

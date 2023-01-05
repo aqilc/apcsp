@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <stddef.h>
 #include "collisions.c"
+#include <stdarg.h>
 #define PLAYERSPEED 4
 
 
@@ -20,7 +21,7 @@ struct {
 	int x, y, w, h; int vx, vy;
 	int dir, state;
 	spritesheet* sprite;
-} player = {.x = 600, .y = 870, .w = 58, .h = 62};
+} player = {.x = 15 * 64, .y = 5 * 64, .w = 58, .h = 62};
 union vec camera = {0, 0};
 // camera width and height are the window width and height defined in g.width and g.height
 
@@ -62,7 +63,7 @@ void killplayer();
 void init() {
 
 	// Initializes text shaders and context
-	glinitgraphics();
+	loadglgraphics();
 
 	// Loads all images and text files
 	double start = glfwGetTime();
@@ -76,8 +77,8 @@ void init() {
 	// images.dungeon1 = loadpixelart("./maps/Dungeon1.png");
 	
 	player.sprite = createss(loadpixelart("./DawnLike/Commissions/Warrior.png"), 16, 16);
-	ui.f = createss(loadimage("./DawnLike/GUI/GUI0.png"), 16, 16);
-	ui.s = createss(loadimage("./DawnLike/GUI/GUI1.png"), 16, 16);
+	ui.f = createss(loadpixelart("./DawnLike/GUI/GUI0.png"), 16, 16);
+	ui.s = createss(loadpixelart("./DawnLike/GUI/GUI1.png"), 16, 16);
 	printf("%.3fs to load images\n", glfwGetTime() - start);
 
 	scenes[0] = starting_town;
@@ -93,9 +94,9 @@ void drawgame() {
 	scenes[scene]();
 	draw_player();
 
-//  fill(1, 1, 1, 1);
-//  tsiz(20);
-//  text(framerate, g.width - 130, g.height - 10);
+  // fill(1, 1, 1, 1);
+  // tsiz(20);
+  // text(framerate, g.width - 200, g.height - 10);
 }
 
 union xy {
@@ -154,16 +155,27 @@ void draw_player() {
 		player.state ++;
 	}
 	
-	// fill(1, 1, 1, 1);
-	// tsiz(20);
-	// for(int i = 0; i < colw; i ++)
-	//   for(int j = 0; j < (collen / colw); j++){
-	// 		// rect(blocksize * i + camera.x + blocksize, blocksize * j + camera.y + blocksize, -20, 2);
-	// 		// rect(blocksize * i + camera.x + blocksize, blocksize * j + camera.y + blocksize, 2, -20);
-	//     char str[3] = {0};
-	//     sprintf(str, "%d", i + j * colw);
-	// 		text(str, blocksize * i + camera.x - 10 + blocksize / 2, blocksize * j + camera.y + blocksize / 2 + 10);
-	// 	}
+	fill(1, 1, 1, 1);
+	for(int i = 0; i < 3; i ++)
+	  for(int j = 0; j < 3; j++){
+			int x = player.x / blocksize + i;
+			int y = player.y / blocksize + j;
+			fill(0, 0, 0, .2);
+			if(getblock(x, y) == 1) {
+				rect(x * blocksize + camera.x, y * blocksize - camera.y, blocksize, blocksize);
+			}
+			rect(blocksize * x + camera.x + blocksize, blocksize * y + camera.y + blocksize, -20, 2);
+			rect(blocksize * x + camera.x + blocksize, blocksize * y + camera.y + blocksize, 2, -20);
+	    char str[4] = {0};
+			char str2[15] = {0};
+	    sprintf(str, "%d", x + y * colw);
+			sprintf(str2, "X:%d\nY:%d", x, y);
+			tsiz(12);
+			fill(0, 0, 0, .6);
+			text(str, blocksize * x + camera.x - 10 + blocksize / 2, blocksize * y + camera.y + blocksize / 2 - 10);
+			text(getblock(x, y) == 1 ? "1" : "0", blocksize * x + camera.x - 10 + blocksize / 2, blocksize * y + camera.y + blocksize / 2 + 5);
+			text(str2, blocksize * x + camera.x - 10 + blocksize / 2, blocksize * y + camera.y + blocksize / 2 + 17);
+		}
 
 	// Shorthands for the player bounds
 	int x = bounds.x;
@@ -220,8 +232,10 @@ bool playeristouching(u32* arr, u32 len) {
 		int pbx = x / blocksize;
 		int pby = y / blocksize;
 
-		if(dir == 2 && bx == pbx + 1 && by == pby) return true; // right dir
-		else if(dir == 0 && bx == pbx && by == pby - 1) return true; // up dir
+		if     (dir == 2 && bx == pbx + 1 && by == pby) return true; // right dir
+		else if(dir == 1 && bx == pbx - 1 && by == pby) return true; // left dir
+		else if(dir == 3 && bx == pbx && by == pby - 1) return true; // up dir
+		else if(dir == 0 && bx == pbx && by == pby + 1) return true; // down dir
 	}
 	return false;
 }
@@ -229,18 +243,85 @@ bool playeristouching(u32* arr, u32 len) {
 // --------------- PROMPT STUFF --------------- //
 
 struct {
-	int lastframe;
-	int startframe;
 	bool frameimg;
-} pst; // prompt state
-void prompt(char* txt) {
-	if (g.frames != pst.lastframe + 1) pst.startframe = g.frames;
+	bool closed;
+	
+	u32 lastframe;
+	u32 startframe;
+	u32 curtext;
+	u32 textnum;
+	u32 triy; // triangle for space, the animation where it goes up and down
+	short* newlines;
+	char** texts;
+} pst = {0}; // prompt state
+void prompt(char* txt, ...) {
+	
+	// If you turn away from the prompt no matter when, it automatically closes/resets
+	if (g.frames != pst.lastframe + 1) {
+
+		// Free every string used before:
+		for(int t = 0; t < pst.textnum; t ++) free(pst.texts[t]);
+		
+		pst.startframe = g.frames;
+		pst.curtext = 0;
+		pst.frameimg = false;
+		pst.closed = false;
+
+		// We max out argument number at like 12 so we don't think spaces or anything are actually the number of arguments we specify
+		char numargs = *txt;
+		if (numargs > 12) numargs = 0;
+		char** texts;
+		short* newlines;
+
+		// Malloc if first prompt, else realloc
+		if(pst.lastframe == 0) {
+			texts = malloc((numargs + 1) * sizeof(char*));
+			newlines = malloc(sizeof(short) * (numargs + 1));
+		} else {
+			texts = realloc(pst.texts, (numargs + 1) * sizeof(char*));
+			newlines = realloc(pst.newlines, sizeof(short) * (numargs + 1));
+		}
+
+		// Sets all ints to 0
+		memset(newlines, 0, sizeof(short) * (numargs + 1));
+		u32 textsind = 1;
+		u32 i = 0;
+		if (numargs > 0) {
+			txt ++;
+			
+			// Goes through the rest of the strings and determines newline count and puts them in the heap
+			va_list args;
+			va_start(args, txt);
+			for(int j = 0; j < numargs; j ++) {
+				char* str = va_arg(args, char*);
+				for(; str[i]; i ++) if(str[i] == '\n') newlines[textsind] ++;
+				texts[textsind] = malloc(i + 1);
+				strcpy(texts[textsind], str);
+				i = 0;
+				textsind ++;
+			}
+			va_end(args);
+		}
+		// Determines lengths and newline count, while putting the first arg in the heap
+		for(;txt[i]; i++) if (txt[i] == '\n') newlines[0] ++;
+		texts[0] = malloc(i + 1);
+		strcpy(texts[0], txt);
+		i = 0;
+
+		pst.texts = texts;
+		pst.newlines = newlines;
+		pst.textnum = textsind;
+
+		// printf("Prompt loaded: numtexts = %d\ntext: %s\n", textsind, pst.texts[0]);
+	}
 	pst.lastframe = g.frames;
-	#define ANIMLEN 10
-	#define PROMPTUPLEN 5
+	if (pst.closed) return;
+
+	#define ANIMLEN 50
+	#define PROMPTUPLEN 20
 
 	// Switches the prompt ui image every 5 frames
-	if(g.frames % 5 == 0) pst.frameimg = !pst.frameimg;
+	if(g.frames % 20 == 0) pst.frameimg = !pst.frameimg;
 	spritesheet* ui_img = pst.frameimg ? ui.f : ui.s;
 
 	// Prompt up animation
@@ -260,15 +341,37 @@ void prompt(char* txt) {
 
 	// Truncates the text so it looks like it's being typed out
 	if(g.frames - pst.startframe <= PROMPTUPLEN) return;
-	int framesintoanim = min(5, g.frames - pst.startframe - PROMPTUPLEN);
-	puts("1");
+
+	// Info for the text we're using for this prompt
+	char* curtex = pst.texts[pst.curtext];
+	u32 origlen = strlen(curtex);
+
+	// Calculates the stage of the typing animation
+	int framesintoanim = min(ANIMLEN - PROMPTUPLEN, g.frames - pst.startframe - PROMPTUPLEN);
 	float animstage = (float) framesintoanim / ((float) ANIMLEN - (float) PROMPTUPLEN);
-	puts("2");
-	u32 texlen = strlen(txt) * animstage;
-	printf("out of bounds? strlen: %d, truncated to: %d\n", strlen(txt), texlen);
-	txt[texlen] = '\0';
-	puts("nah");
-	text(txt, 48 + blocksize, g.height - 20 - blocksize);
+
+	// Clips off the text(by inserting nullchar), and stores the character that was taken out
+	u32 texlen = origlen * animstage;
+	char deletedletter = curtex[texlen];
+	curtex[texlen] = '\0';
+
+	// Draws the text
+	fill(1, 1, 1, 1);
+	tsiz(16);
+	text(curtex, 48 + 24, g.height - 20 - blocksize * 2 + 18 + 24);
+
+	// "SPACE" + triangle vvvvvvvvvvvvvvvv
+	tsiz(12);
+	text("SPACE", g.width - 48 - 120, g.height - 20 - 10 - 12);
+
+	if(g.frames % 20 == 0) pst.triy ++;
+	rect(g.width - 48 - 50,          g.height - 20 - 12 - 24 + (pst.triy % 3) * 2,     7 * 3, 12 / 4);
+	rect(g.width - 48 - 50 + 10 - 7, g.height - 20 - 12 - 24 + (pst.triy % 3) * 2 + 3, 5 * 3, 12 / 4);
+	rect(g.width - 48 - 50 + 10 - 4, g.height - 20 - 12 - 24 + (pst.triy % 3) * 2 + 6, 3 * 3, 12 / 4);
+	rect(g.width - 48 - 50 + 10 - 1, g.height - 20 - 12 - 24 + (pst.triy % 3) * 2 + 8, 1 * 3, 12 / 4);
+	
+	// Subs the character back in
+	if(texlen != origlen) curtex[texlen] = deletedletter;
 }
 
 
@@ -276,15 +379,16 @@ void prompt(char* txt) {
 
 
 void starting_town() {
+	// This code sets the bounds and sets the collision map for the current map, you'll see something like it at the start of every map function
 	imagedata* img = imgd(images.startvil);
 	setbounds(0, 0, img->size.w * blocksize / 16, img->size.h * blocksize / 16);
 	curcol = (u8*) collisions.startvil; collen = 20 * 20; colw = 20;
 	draw_map(images.startvil);
 
 	if(playeristouching((u32[3]) { 273, 293, 313 }, 3))
-		prompt("The world is in danger! The Demon King has summoned 3 Dungeons that might spill out and\ncost us millions of lives!");
+		prompt("\4The world is in danger!", "There are 3 Evil Beings that might\ndestroy the world and kill millions!", "You must defeat them!", "Go to the main village, and talk to the\nguy in the house to the left of the\ntown hall.", "Good luck!");
 	if(playeristouching((u32[5]) { 1, 2, 3, 4, 5 }, 5))
-		scene = 2;
+		scene = 2, player.x = 40 * blocksize, player.y = 30 * blocksize;
 }
 
 void main_town() {
@@ -341,6 +445,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	if(key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, 1);
 	if (mods) return;
+	if(key == GLFW_KEY_SPACE && !pst.closed) {
+		if(pst.curtext >= pst.textnum - 1) pst.closed = true;
+		else pst.curtext ++, pst.startframe = g.frames - PROMPTUPLEN;
+	}
 	switch (key) {
 		case GLFW_KEY_RIGHT:
 			player.vx = PLAYERSPEED;

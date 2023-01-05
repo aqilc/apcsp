@@ -1,6 +1,7 @@
 
 /*
   Copyright ©AqilCont (aqilcm@gmail.com)
+  Commons Clause Licence
 
   TODO:
   - [ ] Keep track of the order of things with z axis
@@ -17,7 +18,7 @@
   - [ ] Draw 3d Shapes
   DONE(OMG WTH NICE BRO):
   - [x] Remove `loadchars`, make it simpler for user
-    - [x] Init freetype in glinitgraphics()
+    - [x] Init freetype in loadglgraphics()
     - [x] loadfont()
   - [x] TEXTURES AND IMAGES WHEN BRUH!??!?!?!??!?! I NEED THAT HOT ANIME GIRL BG!!!!!!
 */
@@ -104,7 +105,7 @@ static u32 faceslen = 0;
 // static int scene;
 
 // Initializes everything for text, including setting up textures etc
-void glinitgraphics() {
+void loadglgraphics() {
   
   // Sets the debug message callback so we can detect opengl errors
   glDebugMessageCallback(MessageCallback, NULL);
@@ -112,6 +113,7 @@ void glinitgraphics() {
   // Enables blending
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_CULL_FACE);
 
   // Initialized VA and shaders
   initcontext(&ctx, "./graphics.glsl");
@@ -212,9 +214,10 @@ void text(char* text, int x, int y) {
   // Generates every vertex
   u16 cur = sh->data.cur;
   GLuint slot = cs->slot;
-  float xp, yp, w, h, tx, ty, th, tw;
+  float xp = 0, yp = 0, w = 0, h = 0, tx = 0, ty = 0, th = 0, tw = 0;
   int initial_x = x;
   u32 i = 0;
+  char* tmpchar = new_c(0);
   for(; i < len; text++, i++) {
 
     // Newlines in five lines :D
@@ -224,15 +227,14 @@ void text(char* text, int x, int y) {
       continue;
     }
 
-    else if(*text == ' ') {
-      x += cs->space_width * scale;
-      continue;
-    }
+    // else if(*text == ' ') {
+    //   x += cs->space_width * scale;
+    //   continue;
+    // }
 
     // Gets the Char object from the hashmap for the character lib
-    char* tmp = new_c(*text);
-    Char* c = htg(cs->chars, tmp);
-    free(tmp);
+    tmpchar[0] = *text;
+    Char* c = htg(cs->chars, tmpchar);
     
     if(!c) { printf("bruh wtf u drawin \"%c\"", *text); continue; }
     
@@ -267,6 +269,7 @@ void text(char* text, int x, int y) {
   }
 
   shapeinsert(vb, ib, 4 * len, 6 * len);
+  free(tmpchar);
   free(vb);
   free(ib);
 }
@@ -329,8 +332,8 @@ typeface* loadchars(FT_Face face, char* chars) {
     if(error) printf("Failed to load glyph '%c' (error code: %d | Line: "_LINE" | File: "__FILE__")\n", chars[i], error);
 
     // Skip spaces, since you don't really need to draw anything
-    if(chars[i] == ' ') {
-      pog->space_width = face->glyph->advance.x >> 6; continue; }
+    // if(chars[i] == ' ') {
+    //   pog->space_width = face->glyph->advance.x >> 6; continue; }
     
     int width = face->glyph->bitmap.width;
     int height = face->glyph->bitmap.rows;

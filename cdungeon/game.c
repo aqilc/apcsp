@@ -94,9 +94,9 @@ void drawgame() {
 	scenes[scene]();
 	draw_player();
 
-  // fill(1, 1, 1, 1);
-  // tsiz(20);
-  // text(framerate, g.width - 200, g.height - 10);
+	// fill(1, 1, 1, 1);
+	// tsiz(20);
+	// text(framerate, g.width - 200, g.height - 10);
 }
 
 union xy {
@@ -166,9 +166,9 @@ void draw_player() {
 			}
 			rect(blocksize * x + camera.x + blocksize, blocksize * y + camera.y + blocksize, -20, 2);
 			rect(blocksize * x + camera.x + blocksize, blocksize * y + camera.y + blocksize, 2, -20);
-	    char str[4] = {0};
+	    char str[6] = {0};
 			char str2[15] = {0};
-	    sprintf(str, "%d", x + y * colw);
+	    snprintf(str, 6, "%d", x + y * colw);
 			sprintf(str2, "X:%d\nY:%d", x, y);
 			tsiz(12);
 			fill(0, 0, 0, .6);
@@ -233,8 +233,8 @@ bool playeristouching(u32* arr, u32 len) {
 		int pby = y / blocksize;
 
 		if     (dir == 2 && bx == pbx + 1 && by == pby) return true; // right dir
-		else if(dir == 1 && bx == pbx - 1 && by == pby) return true; // left dir
-		else if(dir == 3 && bx == pbx && by == pby - 1) return true; // up dir
+		else if(dir == 1 && bx == pbx - 1 && by == pby && player.x - pbx * blocksize < blocksize - player.w) return true; // left dir
+		else if(dir == 3 && bx == pbx && by == pby - 1 && player.y - pby * blocksize < blocksize - player.h) return true; // up dir
 		else if(dir == 0 && bx == pbx && by == pby + 1) return true; // down dir
 	}
 	return false;
@@ -386,7 +386,8 @@ void starting_town() {
 	draw_map(images.startvil);
 
 	if(playeristouching((u32[3]) { 273, 293, 313 }, 3))
-		prompt("\4The world is in danger!", "There are 3 Evil Beings that might\ndestroy the world and kill millions!", "You must defeat them!", "Go to the main village, and talk to the\nguy in the house to the left of the\ntown hall.", "Good luck!");
+		prompt("\4The world is in danger!", "There are 3 Evil Beings that might\ndestroy the world and kill millions!", "You must defeat them!",
+		"Go to the main village, and talk to the\nguy in the house to the left of the\ntown hall.", "Good luck!");
 	if(playeristouching((u32[5]) { 1, 2, 3, 4, 5 }, 5))
 		scene = 2, player.x = 40 * blocksize, player.y = 30 * blocksize;
 }

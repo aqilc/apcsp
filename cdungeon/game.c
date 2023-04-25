@@ -1,11 +1,12 @@
 #include <2dgraphics.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 #include <stddef.h>
-#include "collisions.c"
 #include <stdarg.h>
+#include "collisions.c"
+
+
 #define PLAYERSPEED 4
-
-
 
 bool pressed = false;
 pvec pressplace;
@@ -14,14 +15,14 @@ struct { double x, y; bool pressed; } mouse;
 
 int blocksize = 64;
 
-int scene;
+int scene = 2;
 void (*scenes[4])();
 
 struct {
 	int x, y, w, h; int vx, vy;
 	int dir, state;
 	spritesheet* sprite;
-} player = {.x = 15 * 64, .y = 5 * 64, .w = 58, .h = 62};
+} player = {.x = 39 * 64, .y = 6 * 64, .w = 58, .h = 62 };//15 * 64, .y = 5 * 64, .w = 58, .h = 62};
 union vec camera = {0, 0};
 // camera width and height are the window width and height defined in g.width and g.height
 
@@ -49,8 +50,10 @@ int colw = 0;
 
 typeface* font;
 
-
 bool hovering = false;
+
+enum arrows { UP = 1, DOWN = 2, LEFT = 4, RIGHT = 8 };
+unsigned char keyspressed = 0;
 
 void draw_map(img map);
 void draw_player();
@@ -59,6 +62,9 @@ void starting_town();
 void main_map();
 void dungeon1();
 void killplayer();
+void enemy();
+
+
 
 void init() {
 
@@ -119,7 +125,9 @@ void draw_player() {
 	bool xv = false;
 	bool yv = false;
 
-	if (player.vx) {
+	if (keyspressed & (LEFT | RIGHT)) {
+		if(keyspressed & LEFT) player.vx = -PLAYERSPEED;
+		else if(keyspressed & RIGHT) player.vx = PLAYERSPEED;
 		player.dir = player.vx > 0 ? 2 : 1;
 		player.x += player.vx;
 		xv = true;
@@ -134,7 +142,9 @@ void draw_player() {
 			player.x = pbax + blocksize - player.w - 1, xv = false;
 	}
 
-	if (player.vy) {
+	if (keyspressed & (UP | DOWN)) {
+		if(keyspressed & UP) player.vy = -PLAYERSPEED;
+		else if(keyspressed & DOWN) player.vy = PLAYERSPEED;
 		player.dir = player.vy > 0 ? 0 : 3;
 		player.y += player.vy;
 		yv = true;
@@ -160,7 +170,8 @@ void draw_player() {
 	  for(int j = 0; j < 3; j++){
 			int x = player.x / blocksize + i;
 			int y = player.y / blocksize + j;
-			fill(0, 0, 0, .2);
+			if (scene != 2) fill(0, 0, 0, .4);
+			else fill(255, 255, 255, .4);
 			if(getblock(x, y) == 1) {
 				rect(x * blocksize + camera.x, y * blocksize + camera.y, blocksize, blocksize);
 			}
@@ -171,7 +182,8 @@ void draw_player() {
 	    snprintf(str, 6, "%d", x + y * colw);
 			sprintf(str2, "X:%d\nY:%d", x, y);
 			tsiz(12);
-			fill(0, 0, 0, .6);
+			if (scene != 2) fill(0, 0, 0, .6);
+			else fill(255, 255, 255, .6);
 			text(str, blocksize * x + camera.x - 10 + blocksize / 2, blocksize * y + camera.y + blocksize / 2 - 10);
 			text(getblock(x, y) == 1 ? "1" : "0", blocksize * x + camera.x - 10 + blocksize / 2, blocksize * y + camera.y + blocksize / 2 + 5);
 			text(str2, blocksize * x + camera.x - 10 + blocksize / 2, blocksize * y + camera.y + blocksize / 2 + 17);
@@ -403,7 +415,42 @@ void main_map() {
 	draw_map(images.map);
 }
 
+enum enemytype { MOUSE };
+struct enemydata {
+	enum enemytype type;
+	int hpmax, damage, w, h, speed;
+} enemytypes[] = {
+	{ MOUSE, 10,  1,  10, 10, 5 },
+};
+
+
+int enemieslen = 0;
+struct enemy {
+	int x, y, hp, scene, id;
+	enum enemytype type;
+} *enemies;
+
+void enemy(int damage, int hp) {
+	if(!enemieslen) enemies = malloc(sizeof(struct enemy));
+	else enemies = realloc(enemies, sizeof(struct enemy) * (enemieslen + 1));
+	enemies[enemieslen].x = player.x + 10 * blocksize;
+	enemies[enemieslen].y = player.y + 10 * blocksize;
+	enemies[enemieslen].hp = hp;
+	enemies[enemieslen].scene = scene;
+	enemies[enemieslen].id = enemieslen;
+	enemies[enemieslen].type = MOUSE;
+	enemieslen ++;
+}
+void resetenemies() { enemies = 0; }
+
+
+
+
+
 void dungeon1() {
+	imagedata* img = imgd(images.startvil);
+	setbounds(0, 0, img->size.w * blocksize / 16, img->size.h * blocksize / 16);
+	curcol = (u8*) collisions.startvil; collen = 20 * 20; colw = 20;
 	draw_map(images.dungeon1);
 }
 
@@ -432,36 +479,41 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 int lastdir;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if(action == GLFW_REPEAT) return;
-	if(action == GLFW_RELEASE) {
-		player.state = 0;
-		if (key == GLFW_KEY_RIGHT && player.vx > 0)
-			player.vx = 0;
-		if (key == GLFW_KEY_LEFT && player.vx < 0)
-			player.vx = 0;
-		if (key == GLFW_KEY_DOWN && player.vy > 0)
-			player.vy = 0;
-		if (key == GLFW_KEY_UP && player.vy < 0)
-			player.vy = 0;
+	if (mods) {
+		
 		return;
 	}
 	if(key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, 1);
-	if (mods) return;
+	if(action == GLFW_RELEASE) {
+		player.state = 0;
+		switch(key) {
+			case GLFW_KEY_RIGHT:
+				keyspressed &= ~RIGHT; break;
+			case GLFW_KEY_LEFT:
+				keyspressed &= ~LEFT; break;
+			case GLFW_KEY_DOWN:
+				keyspressed &= ~DOWN; break;
+			case GLFW_KEY_UP:
+				keyspressed &= ~UP; break;
+		}
+		return;
+	}
 	if(key == GLFW_KEY_SPACE && !pst.closed) {
 		if(pst.curtext >= pst.textnum - 1) pst.closed = true;
 		else pst.curtext ++, pst.startframe = g.frames - PROMPTUPLEN;
 	}
 	switch (key) {
 		case GLFW_KEY_RIGHT:
-			player.vx = PLAYERSPEED;
+			keyspressed |= RIGHT;
 			break;
 		case GLFW_KEY_LEFT:
-			player.vx = -PLAYERSPEED;
+			keyspressed |= LEFT;
 			break;
 		case GLFW_KEY_DOWN:
-			player.vy = PLAYERSPEED;
+			keyspressed |= DOWN;
 			break;
 		case GLFW_KEY_UP:
-			player.vy = -PLAYERSPEED;
+			keyspressed |= UP;
 			break;
 	}
 	if(player.dir != lastdir) player.state = 0;

@@ -3,41 +3,41 @@
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "main.c",
 	  "output": "main.o",
-	  "arguments": ["clang", "-xc", "main.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "main.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	},{
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "deps/2dgraphics.c",
 	  "output": "2dgraphics.o",
-	  "arguments": ["clang", "-xc", "deps/2dgraphics.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "deps/2dgraphics.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	},{
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "deps/futil.c",
 	  "output": "futil.o",
-	  "arguments": ["clang", "-xc", "deps/futil.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "deps/futil.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	},{
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "deps/util.c",
 	  "output": "util.o",
-	  "arguments": ["clang", "-xc", "deps/util.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "deps/util.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	},{
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "deps/glapi.c",
 	  "output": "glapi.o",
-	  "arguments": ["clang", "-xc", "deps/glapi.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "deps/glapi.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	},{
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "deps/hash.c",
 	  "output": "hash.o",
-	  "arguments": ["clang", "-xc", "deps/hash.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "deps/hash.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	},{
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "deps/spng.c",
 	  "output": "spng.o",
-	  "arguments": ["clang", "-xc", "deps/spng.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "deps/spng.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	},{
 	  "directory": "d:/projects/rust/apcsp/cdungeon/",
 	  "file": "deps/hashfunc.c",
 	  "output": "hashfunc.o",
-	  "arguments": ["clang", "-xc", "deps/hashfunc.c", "-I", "./deps/include", "-c"]
+	  "arguments": ["clang", "-xc", "deps/hashfunc.c", "-D_CRT_SECURE_NO_WARNINGS", "-I", "./deps/include", "-c"]
 	}
 ]

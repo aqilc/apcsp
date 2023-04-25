@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 project(cdungeon C)
 
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+# set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 include_directories(. ./deps/include)
 link_directories(./deps/lib)

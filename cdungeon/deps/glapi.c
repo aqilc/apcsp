@@ -64,7 +64,7 @@ void lpushi(vlayout* l, unsigned char count) { l->stride += 4 * count; lpush(l, 
 
 void lapply(vlayout* l) {
   struct ltype* cur = l->types;
-  unsigned short i = 0, offset = 0;
+  unsigned int i = 0, offset = 0;
   while(cur != NULL) {
     glEnableVertexAttribArray(i);
     glVertexAttribPointer(i, cur->count, cur->type, cur->normalized ? GL_TRUE : GL_FALSE, l->stride, (const void*) offset);

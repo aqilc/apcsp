@@ -76,7 +76,7 @@ void shapecolor(vec4 col, u16 verts);
 // Image things took even longer than text :((((((
 img loadimage(char* path);
 img loadpixelart(char* path);
-inline imagedata *imgd(img index);
+imagedata *imgd(img index);
 void image(img image, int x, int y, int w, int h);
 void imagesub(img image, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith);
 

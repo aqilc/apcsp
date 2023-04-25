@@ -218,7 +218,7 @@ void text(char* text, int x, int y) {
   int initial_x = x;
   u32 i = 0;
   char* tmpchar = new_c(0);
-  for(; i < len; text++, i++) {
+  for(; *text; text++) {
 
     // Newlines in five lines :D
     if (*text == '\n') {
@@ -227,16 +227,16 @@ void text(char* text, int x, int y) {
       continue;
     }
 
-    // else if(*text == ' ') {
-    //   x += cs->space_width * scale;
-    //   continue;
-    // }
+    else if(*text == ' ') {
+      x += cs->space_width * scale;
+      continue;
+    }
 
     // Gets the Char object from the hashmap for the character lib
     tmpchar[0] = *text;
     Char* c = htg(cs->chars, tmpchar);
     
-    if(!c) { printf("bruh wtf u drawin \"%c\"", *text); continue; }
+    if(!c) { printf("bruh wtf u drawin \"%c\"(%X)\t", *text, *text); continue; }
     
     xp = (float) x + c->bearing.x * scale;
     yp = (float) y - c->bearing.y * scale;
@@ -255,20 +255,38 @@ void text(char* text, int x, int y) {
 
     // Advance cursors for next glyph
     x += (float) c->advance * scale;
+    i++;
   }
+
+  u32 written = i;
   
   // Sets all of the indexes of the index buffer, pretty straightforward
-  for(i = 0; i < len; i ++) {
-    ib[i * 6] = i * 4 + 3 + cur;
+  for(i = 0; i < written; i ++) {
+    //  +-----------+
+    //  |0         1|
+    //  ||^\        |
+    //  ||   \      |
+    //  ||     \    |
+    //  ||       \  |
+    //  |2-------->3|
+    //  +-----------+
+    ib[i * 6]     = i * 4 + 3 + cur;
     ib[i * 6 + 1] = i * 4 + 0 + cur;
     ib[i * 6 + 2] = i * 4 + 2 + cur;
     
+    //  +-----------+
+    //  |0-------->1|
+    //  | ^\       ||
+    //  |    \     ||
+    //  |      \   ||
+    //  |        \ ||
+    //  |2         3|
     ib[i * 6 + 3] = i * 4 + 1 + cur;
     ib[i * 6 + 4] = i * 4 + 3 + cur;
     ib[i * 6 + 5] = i * 4 + 0 + cur;
   }
 
-  shapeinsert(vb, ib, 4 * len, 6 * len);
+  shapeinsert(vb, ib, 4 * written, 6 * written);
   free(tmpchar);
   free(vb);
   free(ib);
@@ -332,8 +350,8 @@ typeface* loadchars(FT_Face face, char* chars) {
     if(error) printf("Failed to load glyph '%c' (error code: %d | Line: "_LINE" | File: "__FILE__")\n", chars[i], error);
 
     // Skip spaces, since you don't really need to draw anything
-    // if(chars[i] == ' ') {
-    //   pog->space_width = face->glyph->advance.x >> 6; continue; }
+    if(chars[i] == ' ') {
+      pog->space_width = face->glyph->advance.x >> 6; continue; }
     
     int width = face->glyph->bitmap.width;
     int height = face->glyph->bitmap.rows;
@@ -535,10 +553,12 @@ img loadpixelart(char* path) {
   return imageinsert(&img);
 }
 
-inline imagedata* imgd(img index) {
+static inline imagedata* simgd(img index) {
   if(index >= imageslen) return NULL;
   return images + index;
 }
+
+imagedata* imgd(img index) { return simgd(index); }
 
 
 static u32 usedslots = 0; // USE BITWISE OPS TO KEEP TRACK OF THE SLOTS OMG WTH SO BIG BRAIN
@@ -565,7 +585,7 @@ static GLuint findslot() {
 
 static bool printed = false;
 static void bindimage(img index) {
-  imagedata* img = imgd(index);
+  imagedata* img = simgd(index);
   if(img->slot > 31) { if(!printed) { printed = true; printf("Invalid slot %d for image with path: %s\n", img->slot, img->name); } return; }
   setui("u_tex", img->slot);
   setui("u_shape", false);
@@ -596,7 +616,7 @@ void image(img image, int ix, int iy, int iw, int ih) {
 void imagesub(img ind, int ix, int iy, int iw, int ih, int itx, int ity, int itw, int ith) {
   if(!ctx->vbid) return;
   bindimage(ind);
-  imagedata* image = imgd(ind);
+  imagedata* image = simgd(ind);
   // binda(ctx->vaid);
   // bindv(ctx->vbid);
   float x = ix; float y = iy; float w = iw; float h = ih;

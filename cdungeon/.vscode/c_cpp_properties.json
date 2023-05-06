@@ -18,7 +18,7 @@
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "compileCommands": "${workspaceFolder}/compile_commands.json",
             "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
